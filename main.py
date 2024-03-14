@@ -1,15 +1,9 @@
 # Required imports
-import csv               # Import module for reading and writing CSV files
-import numpy as np      # Import NumPy library for numerical computations
-import matplotlib.pyplot as plt   # Import Matplotlib library for data visualization
-from flask import Flask, render_template, request   # Import Flask framework for web application development
-
-# Required imports
 import csv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 
 # Function to create CSV file or append data to it
 def save_to_csv(animals, food):
@@ -33,68 +27,39 @@ def read_from_csv():
             animals.append(row[0])
             food.append(float(row[1]))
     return animals, food
+
 # Function to plot consumption graph
 def plot_consumption():
-    """
-    Plot food consumption graph.
-    """
-    animals = []
-    food = []
-    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-    for day in days:
-        day_animals, day_food = read_from_csv_day(day)
-        animals.extend(day_animals)
-        food.extend(day_food)
+    # Your plotting code here...
 
-    plt.bar(animals, food)
-    plt.xlabel('Animals')
-    plt.ylabel('Food Consumption (oz)')
-    plt.title('Daily Food Consumption by Animals')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig('static/food_consumption.png')
-    plt.close()
-
-# Function to read data for a specific day from CSV file
-def read_from_csv_day(day):
-    """
-    Read data for a specific day from CSV file.
-    
-    Args:
-        day (str): Day of the week.
-    
-    Returns:
-        tuple: Tuple containing lists of animals and food consumption values for the specified day.
-    """
-    animals = []
-    food = []
-    with open("animal_food_data.csv", mode='r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if row[0].lower().startswith(day):
-                animals.append(row[0])
-                food.append(float(row[1]))
-    return animals, food
-
-# Route to display form and process data
-@app.route('/', methods=['GET', 'POST'])
+# Route to serve index.html
+@app.route('/')
 def index():
-    """
-    Route to display form for data input and process the submitted data.
-    """
-    if request.method == 'POST':
-        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-        for day in days:
-            animals = request.form.getlist(f'{day}_animals[]')
-            food = request.form.getlist(f'{day}_food[]')
-            animals = [animal.capitalize() for animal in animals]
-            food = [float(f) for f in food]
-            save_to_csv([f"{day}_{animal}" for animal in animals], food)
-
-        plot_consumption()
-
-        return render_template('result.html')
     return render_template('index.html')
+
+# Route to handle form submission
+@app.route('/submit', methods=['POST'])
+def submit_form():
+    if request.method == 'POST':
+        # Process form data
+        animals = request.form.getlist('animals')
+        food = request.form.getlist('food')
+        save_to_csv(animals, food)
+        plot_consumption()  # Plot consumption graph
+        return render_template('result.html')
+    else:
+        return render_template('index.html')
+
+# Route to clear all data
+@app.route('/clear', methods=['POST'])
+def clear():
+    clear_csv()
+    return 'Data cleared successfully'
+
+# Route to serve static files
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory('', path)
 
 if __name__ == '__main__':
     app.run(debug=True)
