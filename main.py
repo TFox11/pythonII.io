@@ -28,9 +28,10 @@ def read_from_csv():
             food.append(float(row[1]))
     return animals, food
 
-# Function to plot consumption graph
+# Function to plot consumption graph (this function is incomplete and needs implementation)
 def plot_consumption():
     # Your plotting code here...
+    pass
 
 # Route to serve index.html
 @app.route('/')
